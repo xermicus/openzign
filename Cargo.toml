@@ -1,0 +1,6 @@
+[workspace]
+members = [
+    "oz-fila",
+    "oz-indexer",
+    "oz-api",
+]
