@@ -5,6 +5,7 @@ use std::{
     thread,
 };
 
+mod index;
 mod schema;
 
 fn spawn_worker(
