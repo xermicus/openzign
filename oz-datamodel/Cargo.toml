@@ -1,12 +1,8 @@
 [package]
-name = "oz-indexer"
+name = "oz-datamodel"
 version = "0.1.0"
-edition = "2018"
+edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-oz-fila = { path = "../oz-fila" }
-tantivy = "0.16.1"
-clap = "2"
-serde_json = "1"

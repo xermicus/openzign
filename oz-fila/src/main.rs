@@ -1,5 +1,5 @@
 use r2pipe::{R2Pipe, R2PipeSpawnOptions};
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::fs::File;
 use std::io::prelude::*;
@@ -10,11 +10,11 @@ use std::thread;
 use std::time::{Duration, Instant};
 use std::{env, path::PathBuf};
 
-#[derive(Serialize, Default)]
+#[derive(Deserialize, Serialize, Default)]
 pub struct FileInfo {
     #[serde(skip_serializing)]
     pub path: String,
-    pub error: Vec<&'static str>,
+    pub error: Vec<String>,
     pub name: String,
     pub sha256: String,
     pub magic: Vec<String>,
@@ -35,13 +35,13 @@ pub struct FileInfo {
     pub yara: String,
 }
 
-#[derive(Serialize)]
+#[derive(Deserialize, Serialize)]
 pub struct ImportInfo {
     pub lib: String,
     pub name: String,
 }
 
-#[derive(Serialize)]
+#[derive(Deserialize, Serialize)]
 pub struct BlockInfo {
     pub name: String,
     pub size: u64,
@@ -49,7 +49,7 @@ pub struct BlockInfo {
     pub entropy: Option<f32>,
 }
 
-#[derive(Serialize)]
+#[derive(Deserialize, Serialize)]
 pub struct Zignature {
     pub function: BlockInfo,
     pub bytes: String,
@@ -78,7 +78,7 @@ impl FileInfo {
             Ok(json) => {
                 self.sha256 = jstr(&json["sha256"]);
             }
-            _ => self.error.push("sha256 hash"),
+            _ => self.error.push("sha256 hash".to_string()),
         }
         self
     }
@@ -92,7 +92,7 @@ impl FileInfo {
                     self.magic.push(jstr(&magic["info"]))
                 }
             }
-            _ => self.error.push("magic"),
+            _ => self.error.push("magic".to_string()),
         }
         self
     }
@@ -111,7 +111,7 @@ impl FileInfo {
                 self.machine = jstr(&json["bin"]["machine"]);
                 self.os = jstr(&json["bin"]["os"]);
             }
-            _ => self.error.push("info"),
+            _ => self.error.push("info".to_string()),
         }
         self
     }
@@ -123,7 +123,7 @@ impl FileInfo {
                     self.strings.push(jstr(&string["string"]))
                 }
             }
-            _ => self.error.push("strings"),
+            _ => self.error.push("strings".to_string()),
         }
         self
     }
@@ -138,7 +138,7 @@ impl FileInfo {
                     })
                 }
             }
-            _ => self.error.push("imports"),
+            _ => self.error.push("imports".to_string()),
         }
         self
     }
@@ -169,7 +169,7 @@ impl FileInfo {
                     }
                 }
             }
-            _ => self.error.push("sections"),
+            _ => self.error.push("sections".to_string()),
         }
         self
     }
@@ -200,7 +200,7 @@ impl FileInfo {
                     }
                 }
             }
-            _ => self.error.push("segments"),
+            _ => self.error.push("segments".to_string()),
         }
         self
     }
@@ -212,7 +212,7 @@ impl FileInfo {
                     self.links.push(jstr(&link))
                 }
             }
-            _ => self.error.push("strings"),
+            _ => self.error.push("strings".to_string()),
         }
         self
     }
@@ -273,7 +273,7 @@ impl FileInfo {
                     })
                 }
             }
-            _ => self.error.push("strings"),
+            _ => self.error.push("strings".to_string()),
         }
         self
     }
@@ -398,7 +398,8 @@ fn spawn_worker(
                         let _ = ch_b.wait();
                     });
                     println!("error {} advanced analysis timeout or panic", &file);
-                    b.error.push("advanced analysis timeout or panic");
+                    b.error
+                        .push("advanced analysis timeout or panic".to_string());
                     serde_json::to_string(&b)
                         .unwrap_or_else(|e| format!("{{\"error\": \"{}\"}}", e))
                 }
@@ -409,7 +410,7 @@ fn spawn_worker(
                         let _ = ch_a.wait();
                     });
                     println!("error {} basic analysis timeout or panic", &file);
-                    a.error.push("basic analysis timeout or panic");
+                    a.error.push("basic analysis timeout or panic".to_string());
                     serde_json::to_string(&a)
                         .unwrap_or_else(|e| format!("{{\"error\": \"{}\"}}", e))
                 }

@@ -34,3 +34,11 @@ The masked zignature should be what you want to search for. Whether it's better 
 * ssdeep
 * entropy
 * size
+
+# More ideas
+* Index ESIL and assembly
+* Do more konwn-good collections
+  * Statically compiled languages (Rust, Golang) stdlibs and common modules
+  * Windwos stuff
+  * https://github.com/SoftSec-KAIST/BinKit
+* Use KV store (rkv/tikv/sled) for documents and use tantivy only for search index
