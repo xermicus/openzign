@@ -42,3 +42,8 @@ The masked zignature should be what you want to search for. Whether it's better 
   * Windwos stuff
   * https://github.com/SoftSec-KAIST/BinKit
 * Use KV store (rkv/tikv/sled) for documents and use tantivy only for search index
+* Some improvements:
+  * Flags: origin
+  * Add a timestamp to see when the document was indexed
+  * Handle "special" cases (Code inside APK, unpack packed samples)
+  * Collect whole binary code instead only code recognized as function (zaF)
