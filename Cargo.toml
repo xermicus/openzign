@@ -3,4 +3,5 @@ members = [
     "oz-fila",
     "oz-indexer",
     "oz-api",
+    "oz-datamodel"
 ]
