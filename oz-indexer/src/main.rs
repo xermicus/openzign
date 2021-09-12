@@ -1,4 +1,5 @@
 use oz_datamodel::*;
+use oz_indexer::{index, schema};
 use schema::Schemas;
 use std::{
     path::PathBuf,
@@ -6,9 +7,8 @@ use std::{
     thread,
     time::Instant,
 };
-use tantivy::{Document, IndexWriter};
-
 use structopt::StructOpt;
+use tantivy::{Document, IndexWriter};
 
 #[derive(StructOpt, Debug)]
 #[structopt(name = "oz-indexer")]
@@ -52,9 +52,6 @@ struct Opt {
     category: String,
 }
 
-pub mod index;
-pub mod schema;
-
 fn spawn_parser(
     in_queue: Receiver<PathBuf>,
     artifact_tx: Sender<Document>,
@@ -96,19 +93,19 @@ fn spawn_indexer(in_queue: Receiver<Document>, mut index: IndexWriter) -> thread
 
 fn main() {
     let opt = Opt::from_args();
-    let n_workers = opt.workers.unwrap_or_else(|| num_cpus::get());
+    let n_workers = opt.workers.unwrap_or_else(num_cpus::get);
 
     let schemas = Schemas::default();
 
     let artifact_index =
-        index::create_index(opt.index_dir.clone(), schemas.artifact.clone(), "artifacts").unwrap();
+        index::open_index(opt.index_dir.clone(), schemas.artifact.clone(), "artifacts").unwrap();
     let artifact_index_writer = artifact_index.writer(opt.heap_size).unwrap();
 
     let block_index =
-        index::create_index(opt.index_dir.clone(), schemas.block.clone(), "blocks").unwrap();
+        index::open_index(opt.index_dir.clone(), schemas.block.clone(), "blocks").unwrap();
     let block_index_writer = block_index.writer(opt.heap_size).unwrap();
 
-    let zignature_index = index::create_index(
+    let zignature_index = index::open_index(
         opt.index_dir.clone(),
         schemas.zignature.clone(),
         "zignatures",
@@ -140,7 +137,7 @@ fn main() {
         ));
     }
 
-    let input_dir = opt.input_dir.clone();
+    let input_dir = opt.input_dir;
     let start = Instant::now();
     let mut worker = 0;
     let mut count = 0;

@@ -330,7 +330,7 @@ impl FileInfo {
             doc.add_text(schema.get_field("name").unwrap(), &zign.function.name);
             doc.add_text(
                 schema.get_field("ssdeep").unwrap(),
-                zign.function.ssdeep.as_ref().unwrap_or_else(|| &empty),
+                zign.function.ssdeep.as_ref().unwrap_or(&empty),
             );
             doc.add_f64(
                 schema.get_field("entropy").unwrap(),
@@ -371,7 +371,7 @@ impl FileInfo {
             doc.add_text(schema.get_field("name").unwrap(), &block.name);
             doc.add_text(
                 schema.get_field("ssdeep").unwrap(),
-                block.ssdeep.as_ref().unwrap_or_else(|| &empty),
+                block.ssdeep.as_ref().unwrap_or(&empty),
             );
             doc.add_f64(
                 schema.get_field("entropy").unwrap(),
