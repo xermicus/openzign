@@ -5,7 +5,11 @@ use tantivy::tokenizer::SimpleTokenizer;
 use tantivy::Index;
 use tantivy::TantivyError;
 
-pub(crate) fn create_index(
+/// Get the index for a Schema:
+/// If the `dir` arg is `None`, a new index in RAM will be created.
+/// If there is already an index inside `dir`/`name` then this index will be used.
+/// Otherwise a new index will be created inside `dir`/`name`.
+pub fn open_index(
     dir: Option<PathBuf>,
     s: Schema,
     name: &'static str,
@@ -22,7 +26,7 @@ pub(crate) fn create_index(
     }?;
     index
         .tokenizers()
-        //.register("maskedbytes", NgramTokenizer::new(3, 3, false));
-        .register("maskedbytes", SimpleTokenizer {});
+        //.register("ngram3", NgramTokenizer::new(3, 3, false));
+        .register("simple", SimpleTokenizer {});
     Ok(index)
 }

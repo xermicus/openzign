@@ -325,7 +325,8 @@ impl FileInfo {
         for zign in self.zignatures.iter() {
             let mut doc = Document::new();
             doc.add_facet(schema.get_field("category").unwrap(), &facet_string);
-            doc.add_text(schema.get_field("artifact").unwrap(), &self.sha256);
+            doc.add_text(schema.get_field("artifact_hash").unwrap(), &self.sha256);
+            doc.add_text(schema.get_field("artifact_name").unwrap(), &self.name);
             doc.add_text(schema.get_field("name").unwrap(), &zign.function.name);
             doc.add_text(
                 schema.get_field("ssdeep").unwrap(),
@@ -365,7 +366,8 @@ impl FileInfo {
         let create_doc = |block: &BlockInfo| -> Document {
             let mut doc = Document::new();
             doc.add_facet(schema.get_field("category").unwrap(), &facet_string);
-            doc.add_text(schema.get_field("artifact").unwrap(), &self.sha256);
+            doc.add_text(schema.get_field("artifact_hash").unwrap(), &self.sha256);
+            doc.add_text(schema.get_field("artifact_name").unwrap(), &self.name);
             doc.add_text(schema.get_field("name").unwrap(), &block.name);
             doc.add_text(
                 schema.get_field("ssdeep").unwrap(),

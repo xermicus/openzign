@@ -20,7 +20,7 @@ impl Default for Schemas {
 fn create_artifacts_schema() -> Schema {
     let mut schema_builder = Schema::builder();
 
-    schema_builder.add_facet_field("category", INDEXED);
+    schema_builder.add_facet_field("category", INDEXED | STORED);
 
     schema_builder.add_text_field("sha256", STRING | STORED);
 
@@ -49,8 +49,9 @@ fn create_artifacts_schema() -> Schema {
 fn create_zignatures_schema() -> Schema {
     let mut schema_builder = Schema::builder();
     schema_builder.add_facet_field("category", INDEXED);
-    schema_builder.add_text_field("artifact", STRING | STORED);
-    schema_builder.add_text_field("name", TEXT);
+    schema_builder.add_text_field("artifact_hash", STRING | STORED);
+    schema_builder.add_text_field("artifact_name", STRING | STORED);
+    schema_builder.add_text_field("name", TEXT | STORED);
     schema_builder.add_text_field("ssdeep", TEXT | STORED);
     schema_builder.add_f64_field("entropy", INDEXED | STORED);
     schema_builder.add_u64_field("size", INDEXED | STORED);
@@ -62,7 +63,7 @@ fn create_zignatures_schema() -> Schema {
     let masked_text_options = TextOptions::default()
         .set_indexing_options(
             TextFieldIndexing::default()
-                .set_tokenizer("maskedbytes")
+                .set_tokenizer("simple")
                 .set_index_option(IndexRecordOption::WithFreqsAndPositions),
         )
         .set_stored();
@@ -74,10 +75,11 @@ fn create_zignatures_schema() -> Schema {
 fn create_blocks_schema() -> Schema {
     let mut schema_builder = Schema::builder();
     schema_builder.add_facet_field("category", INDEXED);
-    schema_builder.add_text_field("artifact", STRING | STORED);
-    schema_builder.add_text_field("name", TEXT);
+    schema_builder.add_text_field("artifact_hash", STRING | STORED);
+    schema_builder.add_text_field("artifact_name", STRING | STORED);
+    schema_builder.add_text_field("name", TEXT | STORED);
     schema_builder.add_text_field("ssdeep", TEXT | STORED);
-    schema_builder.add_f64_field("entropy", INDEXED);
-    schema_builder.add_u64_field("size", INDEXED);
+    schema_builder.add_f64_field("entropy", INDEXED | STORED);
+    schema_builder.add_u64_field("size", INDEXED | STORED);
     schema_builder.build()
 }
