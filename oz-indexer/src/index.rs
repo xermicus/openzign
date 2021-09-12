@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::{fs, path::PathBuf};
 use tantivy::directory::MmapDirectory;
 use tantivy::schema::*;
 use tantivy::tokenizer::SimpleTokenizer;
@@ -17,8 +17,11 @@ pub fn open_index(
     let index = match dir {
         Some(mut d) => {
             d.push(name);
-            match std::fs::create_dir(d.clone()) {
-                _ => {}
+            if d.is_dir() {
+                println!("opening existing index in {}", d.display())
+            } else {
+                fs::create_dir(d.clone())
+                    .unwrap_or_else(|_| panic!("failed to create index directory {}", d.display()))
             }
             Index::open_or_create(MmapDirectory::open(d)?, s)
         }
