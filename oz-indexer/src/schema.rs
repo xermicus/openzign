@@ -1,6 +1,35 @@
 use tantivy::schema::*;
 
-#[derive(Clone)]
+#[derive(Debug)]
+pub enum SchemaKind {
+    Artifact(Schema),
+    Zignature(Schema),
+    Block(Schema),
+}
+
+impl std::str::FromStr for SchemaKind {
+    type Err = &'static str;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "artifact" => Ok(SchemaKind::Artifact(create_artifacts_schema())),
+            "zignature" => Ok(SchemaKind::Zignature(create_zignatures_schema())),
+            "block" => Ok(SchemaKind::Block(create_blocks_schema())),
+            _ => Err("invalid schema kind"),
+        }
+    }
+}
+
+impl std::string::ToString for SchemaKind {
+    fn to_string(&self) -> String {
+        match self {
+            SchemaKind::Artifact(_) => String::from("artifact"),
+            SchemaKind::Zignature(_) => String::from("zignature"),
+            SchemaKind::Block(_) => String::from("block"),
+        }
+    }
+}
+
+#[derive(Clone, Debug)]
 pub struct Schemas {
     pub artifact: Schema,
     pub block: Schema,
