@@ -77,7 +77,7 @@ fn create_artifacts_schema() -> Schema {
 
 fn create_zignatures_schema() -> Schema {
     let mut schema_builder = Schema::builder();
-    schema_builder.add_facet_field("category", INDEXED);
+    schema_builder.add_facet_field("category", INDEXED | STORED);
     schema_builder.add_text_field("artifact_hash", STRING | STORED);
     schema_builder.add_text_field("artifact_name", STRING | STORED);
     schema_builder.add_text_field("name", TEXT | STORED);
@@ -103,7 +103,7 @@ fn create_zignatures_schema() -> Schema {
 
 fn create_blocks_schema() -> Schema {
     let mut schema_builder = Schema::builder();
-    schema_builder.add_facet_field("category", INDEXED);
+    schema_builder.add_facet_field("category", INDEXED | STORED);
     schema_builder.add_text_field("artifact_hash", STRING | STORED);
     schema_builder.add_text_field("artifact_name", STRING | STORED);
     schema_builder.add_text_field("name", TEXT | STORED);
