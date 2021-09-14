@@ -65,7 +65,7 @@ pub enum Opt {
         #[structopt(
         short,
         long,
-        default_value = "100000000", // 100mb
+        default_value = "200000000", // 200mb
         help = "Heap size of tantivy indexer threads"
     )]
         heap_size: usize,

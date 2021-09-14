@@ -76,7 +76,7 @@ fn spawn_indexer(in_queue: Receiver<Document>, mut index: IndexWriter) -> thread
         while let Ok(doc) = in_queue.recv() {
             index.add_document(doc);
             count += 1;
-            if count % 2000 == 0 {
+            if count % 10000 == 0 {
                 index.commit().unwrap();
             }
         }
@@ -163,7 +163,7 @@ pub fn cmd_util(
 
     let stop = start.elapsed().as_secs();
     println!(
-        "done indexing {} documents in {}s ({:.2} document/s)",
+        "done indexing {} samples in {}s ({:.2} sample/s)",
         count,
         stop,
         count as f64 / stop as f64
