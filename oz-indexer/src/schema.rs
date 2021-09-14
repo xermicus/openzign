@@ -86,8 +86,6 @@ fn create_zignatures_schema() -> Schema {
     schema_builder.add_u64_field("size", INDEXED | STORED);
     schema_builder.add_u64_field("bbsum", INDEXED | STORED);
     schema_builder.add_u64_field("vars", INDEXED | STORED);
-    //schema_builder.add_f64_field("bytes", STORED);
-    //schema_builder.add_f64_field("mask", STORED);
 
     let masked_text_options = TextOptions::default()
         .set_indexing_options(

@@ -14,15 +14,19 @@ pub enum Opt {
         )]
         schema: schema::SchemaKind,
 
-        #[structopt(short, long, help = "Search facet")]
-        category: String,
+        #[structopt(
+            short,
+            long,
+            help = "Search facet (category) for fuzzy search or facet counts"
+        )]
+        category: Option<String>,
 
         #[structopt(
             short,
             long,
-            help = "Use '<fieldname>:<searchterm>' to search for a specific field only"
+            help = "Use '<fieldname>:<searchterm>' to search for a specific field only. Sytnax: https://docs.rs/tantivy/latest/tantivy/query/struct.QueryParser.html"
         )]
-        query: String,
+        query: Option<String>,
 
         #[structopt(
             short = "x",

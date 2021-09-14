@@ -76,7 +76,7 @@ fn spawn_indexer(in_queue: Receiver<Document>, mut index: IndexWriter) -> thread
         while let Ok(doc) = in_queue.recv() {
             index.add_document(doc);
             count += 1;
-            if count % 1000 == 0 {
+            if count % 2000 == 0 {
                 index.commit().unwrap();
             }
         }
