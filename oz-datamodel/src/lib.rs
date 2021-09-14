@@ -340,9 +340,6 @@ impl FileInfo {
             doc.add_u64(schema.get_field("bbsum").unwrap(), zign.bbsum);
             doc.add_u64(schema.get_field("vars").unwrap(), zign.n_vars);
 
-            //let bytes = zign.bytes.as_bytes();
-            //let mask = zign.mask.as_bytes();
-            //let masked: Vec<u8> = bytes.iter().zip(mask).map(|(b, m)| b & m).collect();
             let masked: String = zign
                 .bytes
                 .as_str()
