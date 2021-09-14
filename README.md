@@ -6,7 +6,7 @@ Zignatures and other binary identification database, to aid reverse-engineering 
 * [ ] Benign windows binaries
 * [ ] ?
 
-Note: This is still under heavy development.
+Note: This is still under heavy development. This README serves primarly to organize my thoughts.
 
 # Project Structure
 ## oz-fila
@@ -54,8 +54,6 @@ The masked zignature should be what you want to search for. Whether it's better 
 ### Segments & Sections
 * Name
 * ssdeep
-* entropy
-* size
 
 # Ideas and Todos 
 * Index ESIL and assembly (how to avoid duplicates with what is already in zignatures?)
@@ -64,3 +62,5 @@ The masked zignature should be what you want to search for. Whether it's better 
   * Add a timestamp to see when the document was indexed
   * Handle "special" cases (Code inside APK, unpack packed samples)
   * Collect whole binary code instead only code recognized as function (zaF)
+* Proper documentation
+* Tweak user experience (simple default search query probably doesnt provide good results)
