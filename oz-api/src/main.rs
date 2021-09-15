@@ -1,6 +1,7 @@
 use std::path::PathBuf;
 use structopt::StructOpt;
 
+mod core;
 mod server;
 
 #[derive(StructOpt, Debug)]
