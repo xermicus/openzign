@@ -83,6 +83,7 @@ pub fn query_search(
     query: &dyn Query,
     limit: usize,
 ) -> Vec<Document> {
+    // Vec<Document> {
     let docs = searcher.search(query, &TopDocs::with_limit(limit)).unwrap();
     docs.iter()
         .map(|(_, doc_addr)| searcher.doc(*doc_addr).unwrap())

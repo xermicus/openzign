@@ -8,7 +8,7 @@ use oz_indexer::{index::open_index, schema::*};
 use serde::Deserialize;
 use serde_json::Value;
 use std::{collections::HashMap, path::PathBuf};
-use tantivy::{query::QueryParser, Document, Index, IndexReader};
+use tantivy::{query::QueryParser, schema::NamedFieldDocument, Index, IndexReader};
 use tide::{prelude::*, Request};
 
 static FACET_INFO: OnceCell<Mutex<HashMap<IndexKind, HashMap<String, u64>>>> = OnceCell::new();
@@ -64,15 +64,6 @@ struct SearchRequest {
     index: IndexKind,
     category: String,
     query: String,
-}
-
-#[derive(Serialize)]
-struct SearchResult {
-    category: String,
-    artifact_name: String,
-    artifact_hash: String,
-    zignature: Option<String>, // Zignature name for zignature searches
-    block: Option<String>,     // Block name for block searches
 }
 
 #[derive(Serialize, Default)]
@@ -149,7 +140,7 @@ async fn search_handler(mut req: Request<Context>) -> tide::Result<Value> {
             limit = value.parse::<usize>()?
         }
     }
-    let result: tide::Result<Vec<Document>> = spawn_blocking(move || {
+    let result: tide::Result<Vec<NamedFieldDocument>> = spawn_blocking(move || {
         let (searcher, index) = match search_request.index {
             IndexKind::Artifact => {
                 let index = &req.state().artifact_index;
@@ -175,7 +166,11 @@ async fn search_handler(mut req: Request<Context>) -> tide::Result<Value> {
                 search_request.query, search_request.category
             ))
             .map_err(|err| tide::Error::from_str(422, err.to_string()))?;
-        Ok(core::query_search(searcher, &query, limit))
+        //Ok(core::query_search(searcher, &query, limit))
+        Ok(core::query_search(searcher, &query, limit)
+            .iter()
+            .map(|doc| index.schema().to_named_doc(doc))
+            .collect())
     })
     .await;
     Ok(json!(result?))
