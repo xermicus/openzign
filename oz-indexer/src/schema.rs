@@ -81,16 +81,16 @@ fn create_zignatures_schema() -> Schema {
     schema_builder.add_text_field("artifact_hash", STRING | STORED);
     schema_builder.add_text_field("artifact_name", STRING | STORED);
     schema_builder.add_text_field("name", TEXT | STORED);
-    schema_builder.add_text_field("ssdeep", TEXT | STORED);
-    schema_builder.add_f64_field("entropy", INDEXED | STORED);
-    schema_builder.add_u64_field("size", INDEXED | STORED);
-    schema_builder.add_u64_field("bbsum", INDEXED | STORED);
-    schema_builder.add_u64_field("vars", INDEXED | STORED);
+    schema_builder.add_text_field("ssdeep", TEXT);
+    schema_builder.add_f64_field("entropy", INDEXED);
+    schema_builder.add_u64_field("size", INDEXED);
+    schema_builder.add_u64_field("bbsum", INDEXED);
+    schema_builder.add_u64_field("vars", INDEXED);
 
     let masked_text_options = TextOptions::default()
         .set_indexing_options(
             TextFieldIndexing::default()
-                .set_tokenizer("simple")
+                .set_tokenizer("ngram3")
                 .set_index_option(IndexRecordOption::WithFreqsAndPositions),
         )
         .set_stored();
@@ -105,8 +105,8 @@ fn create_blocks_schema() -> Schema {
     schema_builder.add_text_field("artifact_hash", STRING | STORED);
     schema_builder.add_text_field("artifact_name", STRING | STORED);
     schema_builder.add_text_field("name", TEXT | STORED);
-    schema_builder.add_text_field("ssdeep", TEXT | STORED);
-    schema_builder.add_f64_field("entropy", INDEXED | STORED);
-    schema_builder.add_u64_field("size", INDEXED | STORED);
+    schema_builder.add_text_field("ssdeep", TEXT);
+    schema_builder.add_f64_field("entropy", INDEXED);
+    schema_builder.add_u64_field("size", INDEXED);
     schema_builder.build()
 }

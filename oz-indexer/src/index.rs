@@ -8,8 +8,10 @@ use std::{
     time::Instant,
 };
 use tantivy::{
-    directory::MmapDirectory, schema::*, tokenizer::SimpleTokenizer, Index, IndexWriter,
-    TantivyError,
+    directory::MmapDirectory,
+    schema::*,
+    tokenizer::{NgramTokenizer, SimpleTokenizer},
+    Index, IndexWriter, TantivyError,
 };
 
 use crate::schema::{SchemaKind, Schemas};
@@ -40,8 +42,8 @@ pub fn open_index(dir: Option<PathBuf>, schema_kind: SchemaKind) -> Result<Index
     }?;
     index
         .tokenizers()
-        //.register("ngram3", NgramTokenizer::new(3, 3, false));
-        .register("simple", SimpleTokenizer {});
+        .register("ngram3", NgramTokenizer::new(4, 6, false));
+    index.tokenizers().register("simple", SimpleTokenizer {});
     Ok(index)
 }
 
