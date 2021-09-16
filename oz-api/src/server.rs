@@ -140,6 +140,7 @@ async fn search_handler(mut req: Request<Context>) -> tide::Result<Value> {
             limit = value.parse::<usize>()?
         }
     }
+
     let result: tide::Result<Vec<NamedFieldDocument>> = spawn_blocking(move || {
         let (searcher, index) = match search_request.index {
             IndexKind::Artifact => {
@@ -158,21 +159,23 @@ async fn search_handler(mut req: Request<Context>) -> tide::Result<Value> {
                 (searcher, index)
             }
         };
-        let query_parser =
-            QueryParser::for_index(index, vec![index.schema().get_field("name").unwrap()]);
+        let schema = index.schema();
+        let query_parser = QueryParser::for_index(index, vec![schema.get_field("name").unwrap()]);
+        let query_string = format!(
+            "{} +category:{}",
+            search_request.query, search_request.category
+        );
         let query = query_parser
-            .parse_query(&format!(
-                "{} +category:{}",
-                search_request.query, search_request.category
-            ))
+            .parse_query(&query_string)
             .map_err(|err| tide::Error::from_str(422, err.to_string()))?;
-        //Ok(core::query_search(searcher, &query, limit))
-        Ok(core::query_search(searcher, &query, limit)
+        let docs = core::query_search(searcher, &query, limit)
             .iter()
-            .map(|doc| index.schema().to_named_doc(doc))
-            .collect())
+            .map(|doc| schema.to_named_doc(doc))
+            .collect();
+        Ok(docs)
     })
     .await;
+
     Ok(json!(result?))
 }
 
