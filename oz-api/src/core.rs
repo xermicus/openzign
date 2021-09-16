@@ -78,8 +78,12 @@ pub fn all_facet_counts(context: &Context) -> HashMap<IndexKind, HashMap<String,
     result
 }
 
-pub fn query_search(searcher: LeasedItem<Searcher>, query: &dyn Query) -> Vec<Document> {
-    let docs = searcher.search(query, &TopDocs::with_limit(2)).unwrap();
+pub fn query_search(
+    searcher: LeasedItem<Searcher>,
+    query: &dyn Query,
+    limit: usize,
+) -> Vec<Document> {
+    let docs = searcher.search(query, &TopDocs::with_limit(limit)).unwrap();
     docs.iter()
         .map(|(_, doc_addr)| searcher.doc(*doc_addr).unwrap())
         .collect()

@@ -143,6 +143,12 @@ async fn info_handler(_: Request<Context>) -> tide::Result<Value> {
 
 async fn search_handler(mut req: Request<Context>) -> tide::Result<Value> {
     let search_request: SearchRequest = req.body_json().await?;
+    let mut limit = 1000;
+    if let Some((name, value)) = req.url().query_pairs().next() {
+        if name == "limit" {
+            limit = value.parse::<usize>()?
+        }
+    }
     let result: tide::Result<Vec<Document>> = spawn_blocking(move || {
         let (searcher, index) = match search_request.index {
             IndexKind::Artifact => {
@@ -169,7 +175,7 @@ async fn search_handler(mut req: Request<Context>) -> tide::Result<Value> {
                 search_request.query, search_request.category
             ))
             .map_err(|err| tide::Error::from_str(422, err.to_string()))?;
-        Ok(core::query_search(searcher, &query))
+        Ok(core::query_search(searcher, &query, limit))
     })
     .await;
     Ok(json!(result?))
