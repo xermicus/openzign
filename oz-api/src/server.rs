@@ -11,7 +11,7 @@ use std::{collections::HashMap, path::PathBuf};
 use tantivy::{query::QueryParser, Index, IndexReader};
 use tide::{prelude::*, Request};
 
-static FACET_INFO: OnceCell<Mutex<HashMap<String, HashMap<String, u64>>>> = OnceCell::new();
+static FACET_INFO: OnceCell<Mutex<HashMap<IndexKind, HashMap<String, u64>>>> = OnceCell::new();
 
 #[derive(Clone)]
 pub struct Context {
@@ -49,8 +49,8 @@ impl Context {
     }
 }
 
-#[derive(Deserialize)]
-enum IndexKind {
+#[derive(Serialize, Deserialize, Hash, PartialEq, Debug, Eq)]
+pub enum IndexKind {
     #[serde(rename = "artifact")]
     Artifact,
     #[serde(rename = "zignature")]
@@ -75,9 +75,9 @@ struct SearchResult {
     block: Option<String>,     // Block name for block searches
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Default)]
 struct InfoResult {
-    index: HashMap<&'static str, IndexInfo>,
+    index: HashMap<IndexKind, IndexInfo>,
 }
 
 #[derive(Serialize)]
@@ -88,16 +88,13 @@ struct IndexInfo {
 
 async fn describe_index(_: Request<Context>) -> tide::Result<Value> {
     let info = FACET_INFO.get().unwrap().lock().await;
-    let artifact_facets = info.get("artifact").unwrap().clone();
-    let zignature_facets = info.get("zignature").unwrap().clone();
-    let block_facets = info.get("block").unwrap().clone();
-
-    let mut result = InfoResult {
-        index: HashMap::new(),
-    };
+    let artifact_facets = info.get(&IndexKind::Artifact).unwrap().clone();
+    let zignature_facets = info.get(&IndexKind::Block).unwrap().clone();
+    let block_facets = info.get(&IndexKind::Block).unwrap().clone();
+    let mut result = InfoResult::default();
 
     let _ = result.index.insert(
-        "artifact",
+        IndexKind::Artifact,
         IndexInfo {
             fields: vec![
                 "category", "name", "sha256", "strings", "links", "imports", "yara",
@@ -107,7 +104,7 @@ async fn describe_index(_: Request<Context>) -> tide::Result<Value> {
     );
 
     let _ = result.index.insert(
-        "zignature",
+        IndexKind::Zignature,
         IndexInfo {
             fields: vec![
                 "category",
@@ -126,7 +123,7 @@ async fn describe_index(_: Request<Context>) -> tide::Result<Value> {
     );
 
     let _ = result.index.insert(
-        "block",
+        IndexKind::Block,
         IndexInfo {
             fields: vec![
                 "category",
