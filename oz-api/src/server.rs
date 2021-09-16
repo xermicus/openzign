@@ -8,7 +8,7 @@ use oz_indexer::{index::open_index, schema::*};
 use serde::Deserialize;
 use serde_json::Value;
 use std::{collections::HashMap, path::PathBuf};
-use tantivy::{query::QueryParser, Index, IndexReader};
+use tantivy::{query::QueryParser, Document, Index, IndexReader};
 use tide::{prelude::*, Request};
 
 static FACET_INFO: OnceCell<Mutex<HashMap<IndexKind, HashMap<String, u64>>>> = OnceCell::new();
@@ -86,7 +86,7 @@ struct IndexInfo {
     categories: HashMap<String, u64>,
 }
 
-async fn describe_index(_: Request<Context>) -> tide::Result<Value> {
+async fn info_handler(_: Request<Context>) -> tide::Result<Value> {
     let info = FACET_INFO.get().unwrap().lock().await;
     let artifact_facets = info.get(&IndexKind::Artifact).unwrap().clone();
     let zignature_facets = info.get(&IndexKind::Block).unwrap().clone();
@@ -143,25 +143,36 @@ async fn describe_index(_: Request<Context>) -> tide::Result<Value> {
 
 async fn search_handler(mut req: Request<Context>) -> tide::Result<Value> {
     let search_request: SearchRequest = req.body_json().await?;
-    let result = spawn_blocking(move || match search_request.index {
-        IndexKind::Artifact => {
-            let index = &req.state().artifact_index;
-            let searcher = req.state().artifact_index_reader.searcher();
-            let query_parser =
-                QueryParser::for_index(index, vec![index.schema().get_field("name").unwrap()]);
-            let query = query_parser
-                .parse_query(&format!(
-                    "{} +category:{}",
-                    search_request.query, search_request.category
-                ))
-                .unwrap();
-            core::artifact_search(searcher, &query)
-        }
-        IndexKind::Block => todo!(),
-        IndexKind::Zignature => todo!(),
+    let result: tide::Result<Vec<Document>> = spawn_blocking(move || {
+        let (searcher, index) = match search_request.index {
+            IndexKind::Artifact => {
+                let index = &req.state().artifact_index;
+                let searcher = req.state().artifact_index_reader.searcher();
+                (searcher, index)
+            }
+            IndexKind::Zignature => {
+                let index = &req.state().zignature_index;
+                let searcher = req.state().zignature_index_reader.searcher();
+                (searcher, index)
+            }
+            IndexKind::Block => {
+                let index = &req.state().block_index;
+                let searcher = req.state().block_index_reader.searcher();
+                (searcher, index)
+            }
+        };
+        let query_parser =
+            QueryParser::for_index(index, vec![index.schema().get_field("name").unwrap()]);
+        let query = query_parser
+            .parse_query(&format!(
+                "{} +category:{}",
+                search_request.query, search_request.category
+            ))
+            .map_err(|err| tide::Error::from_str(422, err.to_string()))?;
+        Ok(core::query_search(searcher, &query))
     })
     .await;
-    Ok(json!(result))
+    Ok(json!(result?))
 }
 
 pub async fn start(opt: Opt) -> tide::Result<()> {
@@ -176,7 +187,7 @@ pub async fn start(opt: Opt) -> tide::Result<()> {
 
     let mut app = tide::with_state(context);
 
-    app.at("/info").get(describe_index);
+    app.at("/info").get(info_handler);
     app.at("/search").post(search_handler);
 
     app.listen(opt.bind).await?;
