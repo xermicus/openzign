@@ -1,7 +1,7 @@
 use crate::{index, schema::SchemaKind};
 use std::path::PathBuf;
 use tantivy::{
-    collector::{DocSetCollector, FacetCollector},
+    collector::{DocSetCollector, FacetCollector, TopDocs},
     query::{AllQuery, BooleanQuery, FuzzyTermQuery, Occur, Query, QueryParser, TermQuery},
     schema::{Facet, Term},
     Index, LeasedItem, Searcher,
@@ -54,10 +54,10 @@ fn query_search(searcher: LeasedItem<Searcher>, index: &Index, term: &str) {
     let query_parser =
         QueryParser::for_index(index, vec![index.schema().get_field("name").unwrap()]);
     let query = query_parser.parse_query(term).unwrap();
-    let docs = searcher.search(&query, &DocSetCollector {}).unwrap();
+    let docs = searcher.search(&query, &TopDocs::with_limit(100)).unwrap();
     println!("found {} documents", docs.len());
     for doc in docs {
-        let retrieved = searcher.doc(doc).unwrap();
+        let retrieved = searcher.doc(doc.1).unwrap();
         println!("{}", index.schema().to_json(&retrieved));
     }
 }
