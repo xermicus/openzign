@@ -1,5 +1,5 @@
 # TODO
 * [ ] Doc
 * [ ] Error handling
-* [ ] Result types
+* [x] Result types
 * [ ] Rate limiting

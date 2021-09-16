@@ -1,11 +1,17 @@
+use serde::Serialize;
 use std::{collections::HashMap, thread};
-
 use tantivy::{
     collector::{FacetCollector, TopDocs},
     query::{AllQuery, Query},
-    schema::Schema,
-    Document, LeasedItem, Searcher,
+    schema::{NamedFieldDocument, Schema},
+    LeasedItem, Searcher,
 };
+
+#[derive(Serialize)]
+pub struct Match {
+    pub document: NamedFieldDocument,
+    pub score: f32,
+}
 
 use crate::server::{Context, IndexKind};
 
@@ -92,10 +98,14 @@ pub fn all_facet_counts(context: &Context) -> HashMap<IndexKind, HashMap<String,
 pub fn query_search(
     searcher: LeasedItem<Searcher>,
     query: &dyn Query,
+    schema: &Schema,
     limit: usize,
-) -> Vec<Document> {
+) -> Vec<Match> {
     let docs = searcher.search(query, &TopDocs::with_limit(limit)).unwrap();
     docs.iter()
-        .map(|(_, doc_addr)| searcher.doc(*doc_addr).unwrap())
+        .map(|(score, doc_addr)| Match {
+            score: *score,
+            document: schema.to_named_doc(&searcher.doc(*doc_addr).unwrap()),
+        })
         .collect()
 }

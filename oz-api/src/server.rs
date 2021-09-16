@@ -1,4 +1,7 @@
-use crate::{core, Opt};
+use crate::{
+    core::{self, Match},
+    Opt,
+};
 use async_std::{
     sync::{Arc, Mutex},
     task::spawn_blocking,
@@ -8,7 +11,7 @@ use oz_indexer::{index::open_index, schema::*};
 use serde::Deserialize;
 use serde_json::Value;
 use std::{collections::HashMap, path::PathBuf};
-use tantivy::{query::QueryParser, schema::NamedFieldDocument, Index, IndexReader};
+use tantivy::{query::QueryParser, Index, IndexReader};
 use tide::{prelude::*, Request};
 
 static FACET_INFO: OnceCell<Mutex<HashMap<IndexKind, HashMap<String, u64>>>> = OnceCell::new();
@@ -141,7 +144,7 @@ async fn search_handler(mut req: Request<Context>) -> tide::Result<Value> {
         }
     }
 
-    let result: tide::Result<Vec<NamedFieldDocument>> = spawn_blocking(move || {
+    let result: tide::Result<Vec<Match>> = spawn_blocking(move || {
         let (searcher, index) = match search_request.index {
             IndexKind::Artifact => {
                 let index = &req.state().artifact_index;
@@ -168,10 +171,7 @@ async fn search_handler(mut req: Request<Context>) -> tide::Result<Value> {
         let query = query_parser
             .parse_query(&query_string)
             .map_err(|err| tide::Error::from_str(422, err.to_string()))?;
-        let docs = core::query_search(searcher, &query, limit)
-            .iter()
-            .map(|doc| schema.to_named_doc(doc))
-            .collect();
+        let docs = core::query_search(searcher, &query, &schema, limit);
         Ok(docs)
     })
     .await;
