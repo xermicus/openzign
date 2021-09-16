@@ -134,7 +134,7 @@ async fn info_handler(_: Request<Context>) -> tide::Result<Value> {
 
 async fn search_handler(mut req: Request<Context>) -> tide::Result<Value> {
     let search_request: SearchRequest = req.body_json().await?;
-    let mut limit = 1000;
+    let mut limit = 100;
     if let Some((name, value)) = req.url().query_pairs().next() {
         if name == "limit" {
             limit = value.parse::<usize>()?

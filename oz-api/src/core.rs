@@ -47,7 +47,7 @@ pub fn all_facet_counts(context: &Context) -> HashMap<IndexKind, HashMap<String,
 
     let artifact_searcher = context.artifact_index_reader.searcher();
     let artifact_schema = context.artifact_index.schema();
-    let artifact_facets = std::thread::spawn(move || {
+    let artifact_facets = thread::spawn(move || {
         let mut artifact_facets = HashMap::new();
         recursive_facet_count(
             &artifact_searcher,
@@ -94,7 +94,6 @@ pub fn query_search(
     query: &dyn Query,
     limit: usize,
 ) -> Vec<Document> {
-    // Vec<Document> {
     let docs = searcher.search(query, &TopDocs::with_limit(limit)).unwrap();
     docs.iter()
         .map(|(_, doc_addr)| searcher.doc(*doc_addr).unwrap())
