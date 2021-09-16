@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, thread};
 
 use tantivy::{
     collector::{FacetCollector, TopDocs},
@@ -45,25 +45,33 @@ fn recursive_facet_count<'a>(
 pub fn all_facet_counts(context: &Context) -> HashMap<IndexKind, HashMap<String, u64>> {
     let mut result = HashMap::new();
 
-    let mut artifact_facets = HashMap::new();
-    recursive_facet_count(
-        &context.artifact_index_reader.searcher(),
-        &IndexKind::Artifact,
-        context.artifact_index.schema(),
-        "/".to_string(),
-        &mut artifact_facets,
-    );
-    result.insert(IndexKind::Artifact, artifact_facets);
+    let artifact_searcher = context.artifact_index_reader.searcher();
+    let artifact_schema = context.artifact_index.schema();
+    let artifact_facets = std::thread::spawn(move || {
+        let mut artifact_facets = HashMap::new();
+        recursive_facet_count(
+            &artifact_searcher,
+            &IndexKind::Artifact,
+            artifact_schema,
+            "/".to_string(),
+            &mut artifact_facets,
+        );
+        artifact_facets
+    });
 
-    let mut zignature_facets = HashMap::new();
-    recursive_facet_count(
-        &context.zignature_index_reader.searcher(),
-        &IndexKind::Zignature,
-        context.zignature_index.schema(),
-        "/".to_string(),
-        &mut zignature_facets,
-    );
-    result.insert(IndexKind::Zignature, zignature_facets);
+    let zignature_searcher = context.zignature_index_reader.searcher();
+    let zignature_schema = context.zignature_index.schema();
+    let zignature_facets = thread::spawn(move || {
+        let mut zignature_facets = HashMap::new();
+        recursive_facet_count(
+            &zignature_searcher,
+            &IndexKind::Zignature,
+            zignature_schema,
+            "/".to_string(),
+            &mut zignature_facets,
+        );
+        zignature_facets
+    });
 
     let mut block_facets = HashMap::new();
     recursive_facet_count(
@@ -73,6 +81,9 @@ pub fn all_facet_counts(context: &Context) -> HashMap<IndexKind, HashMap<String,
         "/".to_string(),
         &mut block_facets,
     );
+
+    result.insert(IndexKind::Artifact, artifact_facets.join().unwrap());
+    result.insert(IndexKind::Zignature, zignature_facets.join().unwrap());
     result.insert(IndexKind::Block, block_facets);
 
     result
