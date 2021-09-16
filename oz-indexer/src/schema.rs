@@ -90,7 +90,7 @@ fn create_zignatures_schema() -> Schema {
     let masked_text_options = TextOptions::default()
         .set_indexing_options(
             TextFieldIndexing::default()
-                .set_tokenizer("simple")
+                .set_tokenizer("ngram3")
                 .set_index_option(IndexRecordOption::WithFreqsAndPositions),
         )
         .set_stored();

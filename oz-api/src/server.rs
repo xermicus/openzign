@@ -1,11 +1,17 @@
 use crate::{core, Opt};
-use async_std::{sync::Arc, task::spawn_blocking};
+use async_std::{
+    sync::{Arc, Mutex},
+    task::spawn_blocking,
+};
+use once_cell::sync::OnceCell;
 use oz_indexer::{index::open_index, schema::*};
 use serde::Deserialize;
 use serde_json::Value;
-use std::path::PathBuf;
+use std::{collections::HashMap, path::PathBuf};
 use tantivy::{query::QueryParser, Index, IndexReader};
 use tide::{prelude::*, Request};
+
+static FACET_INFO: OnceCell<Mutex<HashMap<String, HashMap<String, u64>>>> = OnceCell::new();
 
 #[derive(Clone)]
 pub struct Context {
@@ -70,12 +76,14 @@ struct SearchResult {
 }
 
 async fn describe_index(_: Request<Context>) -> tide::Result<Value> {
-    Ok(json!({
-        "artifact": {
-        "fields": ["name", "sha256", "strings", "links", "imports", "yara"],
-        "categories": "foo"
-    }
-    }))
+    let info = FACET_INFO.get().unwrap().lock().await;
+    Ok(json!(&*info))
+    //Ok(json!({
+    //    "artifact": {
+    //    "fields": ["name", "sha256", "strings", "links", "imports", "yara"],
+    //    "categories": "foo"
+    //}
+    //}))
 }
 
 async fn search_handler(mut req: Request<Context>) -> tide::Result<Value> {
@@ -85,7 +93,7 @@ async fn search_handler(mut req: Request<Context>) -> tide::Result<Value> {
             let index = &req.state().artifact_index;
             let searcher = req.state().artifact_index_reader.searcher();
             let query_parser =
-                QueryParser::for_index(&index, vec![index.schema().get_field("name").unwrap()]);
+                QueryParser::for_index(index, vec![index.schema().get_field("name").unwrap()]);
             let query = query_parser
                 .parse_query(&format!(
                     "{} +category:{}",
@@ -104,9 +112,16 @@ async fn search_handler(mut req: Request<Context>) -> tide::Result<Value> {
 pub async fn start(opt: Opt) -> tide::Result<()> {
     tide::log::start();
 
-    let mut app = tide::with_state(Context::new(opt.index_dir));
+    let context = Context::new(opt.index_dir);
 
-    app.at("/info/:index").get(describe_index);
+    tide::log::info!("building facet information...");
+    FACET_INFO
+        .set(Mutex::new(core::all_facet_counts(&context)))
+        .unwrap();
+
+    let mut app = tide::with_state(context);
+
+    app.at("/info").get(describe_index);
     app.at("/search").post(search_handler);
 
     app.listen(opt.bind).await?;
