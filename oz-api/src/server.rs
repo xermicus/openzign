@@ -71,7 +71,7 @@ struct SearchResult {
 
 async fn describe_index(_: Request<Context>) -> tide::Result<Value> {
     Ok(json!({
-        "Artifact": {
+        "artifact": {
         "fields": ["name", "sha256", "strings", "links", "imports", "yara"],
         "categories": "foo"
     }
@@ -86,7 +86,12 @@ async fn search_handler(mut req: Request<Context>) -> tide::Result<Value> {
             let searcher = req.state().artifact_index_reader.searcher();
             let query_parser =
                 QueryParser::for_index(&index, vec![index.schema().get_field("name").unwrap()]);
-            let query = query_parser.parse_query(&search_request.query).unwrap();
+            let query = query_parser
+                .parse_query(&format!(
+                    "{} +category:{}",
+                    search_request.query, search_request.category
+                ))
+                .unwrap();
             core::artifact_search(searcher, &query)
         }
         IndexKind::Block => todo!(),

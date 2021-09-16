@@ -1,4 +1,4 @@
-use oz_indexer::{index, schema, search};
+use oz_indexer::{index, schema::SchemaKind, search};
 use std::path::PathBuf;
 use structopt::StructOpt;
 
@@ -12,14 +12,15 @@ pub enum Opt {
             long,
             help = "'artifact' (generall Information), 'zignature' (radare2 Zignatures information) or 'block' (Segments and Sections)"
         )]
-        schema: schema::SchemaKind,
+        schema: SchemaKind,
 
         #[structopt(
             short,
             long,
+            default_value = "/",
             help = "Search facet (category) for fuzzy search or facet counts"
         )]
-        category: Option<String>,
+        category: String,
 
         #[structopt(
             short,
@@ -35,6 +36,21 @@ pub enum Opt {
             help = "Directory in which the search index is stored"
         )]
         index_dir: PathBuf,
+
+        #[structopt(
+            short = "f",
+            long,
+            help = "If set, a fuzzy search for this field name is performed (provide the search term in the query argument)"
+        )]
+        fuzzy: Option<String>,
+
+        #[structopt(
+            short = "d",
+            long,
+            default_value = "2",
+            help = "Levenshtein distance for fuzzy searches"
+        )]
+        fuzzy_distance: u8,
     },
 
     #[structopt(name = "index")]
@@ -86,7 +102,9 @@ fn main() {
             schema,
             category,
             query,
-        } => search::cmd_util(index_dir, schema, category, query),
+            fuzzy,
+            fuzzy_distance,
+        } => search::cmd_util(index_dir, schema, category, query, fuzzy, fuzzy_distance),
 
         Opt::Index {
             index_dir,
