@@ -75,15 +75,73 @@ struct SearchResult {
     block: Option<String>,     // Block name for block searches
 }
 
+#[derive(Serialize)]
+struct InfoResult {
+    index: HashMap<&'static str, IndexInfo>,
+}
+
+#[derive(Serialize)]
+struct IndexInfo {
+    fields: Vec<&'static str>,
+    categories: HashMap<String, u64>,
+}
+
 async fn describe_index(_: Request<Context>) -> tide::Result<Value> {
     let info = FACET_INFO.get().unwrap().lock().await;
-    Ok(json!(&*info))
-    //Ok(json!({
-    //    "artifact": {
-    //    "fields": ["name", "sha256", "strings", "links", "imports", "yara"],
-    //    "categories": "foo"
-    //}
-    //}))
+    let artifact_facets = info.get("artifact").unwrap().clone();
+    let zignature_facets = info.get("zignature").unwrap().clone();
+    let block_facets = info.get("block").unwrap().clone();
+
+    let mut result = InfoResult {
+        index: HashMap::new(),
+    };
+
+    let _ = result.index.insert(
+        "artifact",
+        IndexInfo {
+            fields: vec![
+                "category", "name", "sha256", "strings", "links", "imports", "yara",
+            ],
+            categories: artifact_facets,
+        },
+    );
+
+    let _ = result.index.insert(
+        "zignature",
+        IndexInfo {
+            fields: vec![
+                "category",
+                "name",
+                "artifact_sha256",
+                "artifact_name",
+                "masked",
+                "ssdeep",
+                "entropy",
+                "size",
+                "bbsum",
+                "vars",
+            ],
+            categories: zignature_facets,
+        },
+    );
+
+    let _ = result.index.insert(
+        "block",
+        IndexInfo {
+            fields: vec![
+                "category",
+                "name",
+                "artifact_sha256",
+                "artifact_name",
+                "ssdeep",
+                "entropy",
+                "size",
+            ],
+            categories: block_facets,
+        },
+    );
+
+    Ok(json!(result))
 }
 
 async fn search_handler(mut req: Request<Context>) -> tide::Result<Value> {

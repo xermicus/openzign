@@ -42,7 +42,7 @@ pub fn open_index(dir: Option<PathBuf>, schema_kind: SchemaKind) -> Result<Index
     }?;
     index
         .tokenizers()
-        .register("ngram3", NgramTokenizer::new(3, 3, false));
+        .register("ngram3", NgramTokenizer::new(4, 6, false));
     index.tokenizers().register("simple", SimpleTokenizer {});
     Ok(index)
 }
