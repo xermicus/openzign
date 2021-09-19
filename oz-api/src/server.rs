@@ -83,7 +83,7 @@ struct IndexInfo {
 async fn info_handler(_: Request<Context>) -> tide::Result<Value> {
     let info = FACET_INFO.get().unwrap().lock().await;
     let artifact_facets = info.get(&IndexKind::Artifact).unwrap().clone();
-    let zignature_facets = info.get(&IndexKind::Block).unwrap().clone();
+    let zignature_facets = info.get(&IndexKind::Zignature).unwrap().clone();
     let block_facets = info.get(&IndexKind::Block).unwrap().clone();
     let mut result = InfoResult::default();
 

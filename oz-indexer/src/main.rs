@@ -82,7 +82,7 @@ pub enum Opt {
             short,
             long,
             default_value = "8",
-            help = "Amount of workers for the tantivy indexer. Note: Using more threads does NOT make things faster somehow (they way tantivy does threading seems a weird)."
+            help = "Amount of workers for the tantivy indexer. Note: Using more threads does NOT make things faster somehow (the way tantivy does threading seems a bit weird)."
         )]
         tantivy_threads: usize,
 
