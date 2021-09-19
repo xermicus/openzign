@@ -1,5 +1,5 @@
 use serde::Serialize;
-use std::{collections::HashMap, thread};
+use std::{collections::HashMap, thread, time::Instant};
 use tantivy::{
     collector::{FacetCollector, TopDocs},
     query::{AllQuery, Query},
@@ -50,6 +50,7 @@ fn recursive_facet_count<'a>(
 
 pub fn all_facet_counts(context: &Context) -> HashMap<IndexKind, HashMap<String, u64>> {
     let mut result = HashMap::new();
+    let start = Instant::now();
 
     let artifact_searcher = context.artifact_index_reader.searcher();
     let artifact_schema = context.artifact_index.schema();
@@ -92,6 +93,8 @@ pub fn all_facet_counts(context: &Context) -> HashMap<IndexKind, HashMap<String,
     result.insert(IndexKind::Zignature, zignature_facets.join().unwrap());
     result.insert(IndexKind::Block, block_facets);
 
+    let stop = start.elapsed().as_secs();
+    tide::log::info!("facet counting took {}s", stop);
     result
 }
 

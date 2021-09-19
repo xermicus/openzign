@@ -1,5 +1,5 @@
 # The openZign project
-Zignatures and other binary identification database, to aid reverse-engineering tasks. Collected from various datasources:
+Zignatures and other binary identification database. For fun and to aid reverse-engineering tasks. Collected from various datasources:
 * [x] [vx-underground collection](https://vx-underground.org/samples.html) (>2TB decompressed)
 * [x] [BinKit](https://github.com/SoftSec-KAIST/BinKit) dataset (>200GB decompressed)
 * [ ] Std-libs from statically compiled languages (golang, rust)

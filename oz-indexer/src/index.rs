@@ -72,13 +72,17 @@ fn spawn_parser(
     })
 }
 
-fn spawn_indexer(in_queue: Receiver<Document>, mut index: IndexWriter) -> thread::JoinHandle<()> {
+fn spawn_indexer(
+    in_queue: Receiver<Document>,
+    mut index: IndexWriter,
+    commit_after: usize,
+) -> thread::JoinHandle<()> {
     thread::spawn(move || {
         let mut count: usize = 0;
         while let Ok(doc) = in_queue.recv() {
             index.add_document(doc);
             count += 1;
-            if count % 10000 == 0 {
+            if count % commit_after == 0 {
                 index.commit().unwrap();
             }
         }
@@ -90,30 +94,46 @@ pub fn cmd_util(
     input_dir: PathBuf,
     index_dir: Option<PathBuf>,
     n_workers: usize,
+    tantivy_threads: usize,
     heap_size: usize,
+    commit_after: usize,
     category: String,
 ) {
     let schemas = Schemas::default();
 
     let artifact_index =
         open_index(index_dir.clone(), SchemaKind::from_str("artifact").unwrap()).unwrap();
-    let artifact_index_writer = artifact_index.writer(heap_size).unwrap();
+    let artifact_index_writer = artifact_index
+        .writer_with_num_threads(tantivy_threads, heap_size)
+        .unwrap();
 
     let block_index =
         open_index(index_dir.clone(), SchemaKind::from_str("block").unwrap()).unwrap();
-    let block_index_writer = block_index.writer(heap_size).unwrap();
+    let block_index_writer = block_index
+        .writer_with_num_threads(tantivy_threads, heap_size)
+        .unwrap();
 
     let zignature_index =
         open_index(index_dir, SchemaKind::from_str("zignature").unwrap()).unwrap();
-    let zignature_index_writer = zignature_index.writer(heap_size).unwrap();
+    let zignature_index_writer = zignature_index
+        .writer_with_num_threads(tantivy_threads, heap_size)
+        .unwrap();
 
     let mut indexers = Vec::with_capacity(n_workers);
     let (artifact_tx, artifact_rx) = channel();
     let (zignature_tx, zignature_rx) = channel();
     let (block_tx, block_rx) = channel();
-    indexers.push(spawn_indexer(artifact_rx, artifact_index_writer));
-    indexers.push(spawn_indexer(zignature_rx, zignature_index_writer));
-    indexers.push(spawn_indexer(block_rx, block_index_writer));
+    indexers.push(spawn_indexer(
+        artifact_rx,
+        artifact_index_writer,
+        commit_after,
+    ));
+    indexers.push(spawn_indexer(
+        zignature_rx,
+        zignature_index_writer,
+        commit_after,
+    ));
+    indexers.push(spawn_indexer(block_rx, block_index_writer, commit_after));
 
     let mut parsers = Vec::with_capacity(n_workers);
     for _ in 0..n_workers {

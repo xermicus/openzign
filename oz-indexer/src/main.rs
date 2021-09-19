@@ -79,12 +79,28 @@ pub enum Opt {
         workers: Option<usize>,
 
         #[structopt(
+            short,
+            long,
+            default_value = "8",
+            help = "Amount of workers for the tantivy indexer. Note: Using more threads does NOT make things faster somehow (they way tantivy does threading seems a weird)."
+        )]
+        tantivy_threads: usize,
+
+        #[structopt(
         short,
         long,
-        default_value = "200000000", // 200mb
+        default_value = "2000000000", // 2gb
         help = "Heap size of tantivy indexer threads"
-    )]
+        )]
         heap_size: usize,
+
+        #[structopt(
+            short = "n",
+            long,
+            default_value = "100000",
+            help = "Commit (write) the index after n documents. Higher value means faster indexing but also higher RAM usage"
+        )]
+        commit_after: usize,
 
         #[structopt(
             short,
@@ -110,11 +126,21 @@ fn main() {
             index_dir,
             input_dir,
             workers,
+            tantivy_threads,
             heap_size,
+            commit_after,
             category,
         } => {
             let n_workers = workers.unwrap_or_else(num_cpus::get);
-            index::cmd_util(input_dir, index_dir, n_workers, heap_size, category)
+            index::cmd_util(
+                input_dir,
+                index_dir,
+                n_workers,
+                tantivy_threads,
+                heap_size,
+                commit_after,
+                category,
+            )
         }
     }
 }
